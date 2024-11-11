@@ -30,7 +30,7 @@ class DataUtils{
     }
     
     /// 将字典转换为 JSON 数据
-    func jsonFromDict(dict: [String: Any]) -> String?{
+    func jsonStringFrom(dict: [String: Any]) -> String?{
         if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []) {
             // 将 JSON 数据转换为字符串
             let jsonString = String(data: jsonData, encoding: .utf8)
@@ -41,7 +41,7 @@ class DataUtils{
     }
     
     /// 将字典转换为 URL 编码字符串
-    func paramsStringFromDict(dict: [String: Any]) -> String{
+    func stringFromParamters(dict: [String: Any]) -> String{
         let queryString = dict.map { key, value in
             var val = ""
             if let vall = value as? String{

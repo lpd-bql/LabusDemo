@@ -16,7 +16,7 @@ class NetworkManager{
     
     lazy var headers: HTTPHeaders = {
         var headers = HTTPHeaders.init()
-        headers.add(name: "", value: "")
+        headers.add(name: "appid", value: "1")
         
         return headers
     }()
@@ -53,7 +53,6 @@ class NetworkManager{
         AF.request(absolutUrl, method: .post, parameters: parameters, headers: self.headers)
             .validate()
             .responseDecodable(of: T.self) { response in
-                // 通过 responseDecodable 方法，可轻松将 JSON 响应转换为 Swift 对象
                 switch response.result {
                 case .success(let data):
                     completion(.success(data))
