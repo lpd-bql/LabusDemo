@@ -19,7 +19,7 @@ target 'LubasApp' do
   
   # pod 'FSPagerView'  # 轮播图
   # pod 'KMPlaceholderTextView'
-  # pod 'XLPagerTabStrip'  # 构造多级页面
+  # pod 'JXSegmentedView'  # 构造多级页面
   # pod 'CHTCollectionViewWaterfallLayout'  # 瀑布流cell
   # pod 'PopupDialog'  # alert和sheet
   # pod 'FaveButton'  # 按钮点击动效
