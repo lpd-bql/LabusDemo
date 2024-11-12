@@ -37,5 +37,26 @@ extension String{
         
         return jsonString
     }
+    
+    func urlEncode() -> String? {
+        if let encodedString = self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+            return encodedString
+        }
+        return nil
+    }
 
+    func urlEncodedJSONStringFrom(_ dict: [String: Any]) -> String? {
+        // 1. 将字典转换为 JSON 数据
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []) else {
+            return nil
+        }
+        
+        // 2. 将 JSON 数据转换为字符串
+        let jsonString = String(data: jsonData, encoding: .utf8)
+        
+        // 3. 对 JSON 字符串进行 URL 编码
+        let urlEncodedString = jsonString?.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+        
+        return urlEncodedString
+    }
 }

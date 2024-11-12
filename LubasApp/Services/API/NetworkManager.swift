@@ -14,6 +14,10 @@ class NetworkManager{
     
     let baseUrl = "https://google.com"
     
+    let reachabilityManager = NetworkReachabilityManager()
+    
+    private let cache = NetworkCache()  // 缓存
+
     lazy var headers: HTTPHeaders = {
         var headers = HTTPHeaders.init()
         headers.add(name: "appid", value: "1")
@@ -35,6 +39,7 @@ class NetworkManager{
                 // 通过 responseDecodable 方法，可轻松将 JSON 响应转换为 Swift 对象
                 switch response.result {
                 case .success(let data):
+                    
                     completion(.success(data))
                 case .failure(let error):
                     completion(.failure(error))
@@ -63,4 +68,29 @@ class NetworkManager{
     }
     
     
+}
+
+extension NetworkManager {
+    /// 网络状态
+    public var networkStatus: NetworkStatus {
+        guard let status = reachabilityManager?.status else { return .Unknown }
+        switch status {
+            case .unknown:
+            return .Unknown
+            case .notReachable:
+            return .NotReachable
+            case .reachable(let type):
+                switch type {
+                    case .ethernetOrWiFi:
+                    return .WiFi
+                    case .cellular:
+                    return .WWAN
+                }
+        }
+    }
+    
+    /// 网络是否可用
+    public var isNetworkReachable: Bool {
+        return networkStatus == .WiFi || networkStatus == .WWAN
+    }
 }

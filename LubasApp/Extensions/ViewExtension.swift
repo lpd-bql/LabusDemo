@@ -9,6 +9,13 @@ import UIKit
 
 extension UIView{
     
+    /// 把UIView 渲染成 UIImage
+    func asImage() -> UIImage {
+        let renderer = UIGraphicsImageRenderer(bounds: self.bounds)
+        return renderer.image { (rendererContext) in
+            layer.render(in: rendererContext.cgContext)
+        }
+    }
     /// 设圆角（传统方式）
     /// - Parameters:
     ///   - r: 圆角半径
@@ -57,12 +64,5 @@ extension UIView{
         return nibs.first
     }
     
-    /// 把UIView 渲染成 UIImage
-    func asImage() -> UIImage {
-        let renderer = UIGraphicsImageRenderer(bounds: self.bounds)
-        return renderer.image { (rendererContext) in
-            layer.render(in: rendererContext.cgContext)
-        }
-    }
     
 }

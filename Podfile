@@ -13,7 +13,7 @@ target 'LubasApp' do
   # pod 'MBProgressHUD'
   
   pod 'Alamofire'
-  # pod 'MJRefresh'
+  pod 'MJRefresh'
   # pod 'RxSwift'
   # pod 'RxCocoa'
   
