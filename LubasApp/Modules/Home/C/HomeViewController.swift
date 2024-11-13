@@ -16,15 +16,46 @@ class HomeViewController: BaseViewController{
         title = "主页"
 
         let b = UIButton()
-        b.setTitle("改变", for: .normal)
+        b.setTitle("正常", for: .normal)
         b.setTitleColor(.gray, for: .normal)
-        b.setImage(.init(named: "arrow"), for: .normal)
-        b.exchangeTitleImage()
+        b.addTarget(self, action: #selector(clickBtn), for: .touchUpInside)
         view.addSubview(b)
         b.snp.makeConstraints { make in
             make.center.equalToSuperview()
         }
     
+        let b2 = UIButton()
+        b2.setTitle("使用缓存", for: .normal)
+        b2.setTitleColor(.gray, for: .normal)
+        b2.addTarget(self, action: #selector(clickBtn2), for: .touchUpInside)
+        view.addSubview(b2)
+        b2.snp.makeConstraints { make in
+            make.centerY.leading.equalToSuperview()
+        }
     }
     
+    
+    @objc func clickBtn(){
+        
+        APIService.getBall(useCache: false, params: ["type":"json"]) { res in
+            switch res {
+            case .success(let data):
+                let b = data.mp4Video
+                print("ddddd:\(b)")
+            case .failure(let failure):
+                print("d")
+            }
+        }
+    }
+    
+    @objc func clickBtn2(){
+        APIService.getBall(useCache: true, params: ["type":"json"]) { res in
+            switch res {
+            case .success(let success):
+                print("d")
+            case .failure(let failure):
+                print("d")
+            }
+        }
+    }
 }

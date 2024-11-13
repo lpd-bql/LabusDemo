@@ -10,7 +10,7 @@ import Foundation
 class DataUtils{
     
     /// 从URL中提取参数，输出为字典
-    func extractURLParameters(from url: URL) -> [String: Any]? {
+    static func extractURLParameters(from url: URL) -> [String: Any]? {
         // 用 URLComponents 来解析 URL
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
@@ -30,7 +30,7 @@ class DataUtils{
     }
     
     /// 将字典转换为 JSON 数据
-    func jsonStringFrom(dict: [String: Any]) -> String?{
+    static func jsonStringFrom(dict: [String: Any]) -> String?{
         if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []) {
             // 将 JSON 数据转换为字符串
             let jsonString = String(data: jsonData, encoding: .utf8)
@@ -41,7 +41,9 @@ class DataUtils{
     }
     
     /// 将字典转换为 URL 编码字符串
-    func stringFromParamters(dict: [String: Any]) -> String{
+    static func stringFromParamters(dict: [String: Any]?) -> String{
+        guard let dict = dict else { return "" }
+        
         let queryString = dict.map { key, value in
             var val = ""
             if let vall = value as? String{
