@@ -13,7 +13,7 @@ struct User: Codable{
     
     func fetchUserInfo(dataReback: @escaping (Any?)->()){
         let params = ["":""]
-        APIService.getUsers(url: "user/info", params: params) { result in
+        APIService.getUsers(params: params) { result in
             
             switch result {
             case .success(let userResp):

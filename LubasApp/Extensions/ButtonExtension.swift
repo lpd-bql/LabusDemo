@@ -21,17 +21,15 @@ extension UIButton{
         return bt
     }
     
-    /// 交换 title 和 image 的位置
-    func asTextImage(padding: CGFloat){
+    /// 交换 title 和 image 的位置  
+    func exchangeTitleImage(){
+        
+        // 设置图标和文字的位置交换
+        self.semanticContentAttribute = .forceRightToLeft
 
-        let spacing: CGFloat = 8.0  // 文字和图标之间的间距
-        self.transform = CGAffineTransform(scaleX: -1.0, y: 1.0)
-        self.titleLabel?.transform = CGAffineTransform(scaleX: -1.0, y: 1.0)
-        self.imageView?.transform = CGAffineTransform(scaleX: -1.0, y: 1.0)
-
-        // 设置图标和文字的间距
-        self.titleEdgeInsets = UIEdgeInsets(top: 0, left: padding, bottom: 0, right: -padding)
-        self.imageEdgeInsets = UIEdgeInsets(top: 0, left: -padding, bottom: 0, right: padding)
+        // 设置按钮两端的边距
+        let horizontalPadding: CGFloat = 8.0 // 设置左右边距的大小
+        self.contentEdgeInsets = UIEdgeInsets(top: 0, left: horizontalPadding, bottom: 0, right: horizontalPadding)
     }
     
 }

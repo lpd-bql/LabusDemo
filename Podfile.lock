@@ -1,6 +1,7 @@
 PODS:
   - Alamofire (5.10.1)
   - Kingfisher (7.6.1)
+  - MJRefresh (3.7.9)
   - SnapKit (5.0.1)
   - SwiftMessages (9.0.6):
     - SwiftMessages/App (= 9.0.6)
@@ -9,6 +10,7 @@ PODS:
 DEPENDENCIES:
   - Alamofire
   - Kingfisher (= 7.6.1)
+  - MJRefresh
   - SnapKit
   - SwiftMessages
 
@@ -16,15 +18,17 @@ SPEC REPOS:
   trunk:
     - Alamofire
     - Kingfisher
+    - MJRefresh
     - SnapKit
     - SwiftMessages
 
 SPEC CHECKSUMS:
   Alamofire: 840d2a1ad82355b536ec6ba5f97e5bfa54600ca3
   Kingfisher: 93a3c6d0d551658a31e19f21747e1d15cb39d525
+  MJRefresh: ff9e531227924c84ce459338414550a05d2aea78
   SnapKit: 97b92857e3df3a0c71833cce143274bf6ef8e5eb
   SwiftMessages: f0c7ef4705a570ad6c5e208b611f4333e660ed92
 
-PODFILE CHECKSUM: 3047639e591f7d62269bd0d4543071aea027e5ab
+PODFILE CHECKSUM: b5a80d5ce773c2676d42db9213d6af04ab23024f
 
 COCOAPODS: 1.15.2
