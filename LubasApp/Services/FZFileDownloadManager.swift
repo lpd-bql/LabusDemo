@@ -28,6 +28,7 @@ class FZFileDownloadManager{
     
     // 处理 业务相关
     var fileDownloadInfosDict: [String : String] = [:]   //下载链接 作为key
+    
     private var lock: NSRecursiveLock? = NSRecursiveLock()
 
     // 本身
@@ -40,8 +41,8 @@ class FZFileDownloadManager{
     private var pendingDownloads: [String: FZDownloadParam] = [:]    // 等待中的 任务
     private var downloadStatus: [String: FZDownloadStatus] = [:]
     
-    private let downloadDirectory: URL
-    private let cacheDirectory: URL
+    let downloadDirectory: URL
+    let cacheDirectory: URL
     
     private let downloadQueue = DispatchQueue(label: "com.fz.downloader")
 
@@ -58,14 +59,17 @@ class FZFileDownloadManager{
         
         operationQueue.maxConcurrentOperationCount = maxConcurrentDownloads
 
-        // 创建文件保存目录
         let fileManager = FileManager.default
-        downloadDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("FZFileDownloads")
+        
+        // 创建文件保存目录
+        let path1 = "FZFileDownloads"
+        downloadDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(path1)
         if !fileManager.fileExists(atPath: downloadDirectory.path) {
             try? fileManager.createDirectory(at: downloadDirectory, withIntermediateDirectories: true, attributes: nil)
         }
         
-        cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("FZFileCaches")
+        let path2 = "FZFileCaches"
+        cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent(path2)
         if !fileManager.fileExists(atPath: cacheDirectory.path) {
             try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
         }
@@ -153,7 +157,7 @@ extension FZFileDownloadManager{
     func downloadFile(from url: String, progress: @escaping (Progress) -> Void, completion: @escaping (Result<URL?, Error>) -> Void
     ) {
         // 本地
-        let fileURL = getFileAppSaveURL(with: url)
+        let fileURL = getDestinationURL(with: url)
           
         // 是否 已下载过
         if FileManager.default.fileExists(atPath: fileURL.path) {
@@ -192,7 +196,7 @@ extension FZFileDownloadManager{
     ) {
         
         // 下载到
-        let fileURL = getFileAppSaveURL(with: url)
+        let fileURL = getDestinationURL(with: url)
         let destination: DownloadRequest.Destination = { _, _ in
             return (fileURL, [.removePreviousFile, .createIntermediateDirectories])
         }
@@ -314,15 +318,16 @@ extension FZFileDownloadManager{
 
 // MARK: - 业务相关
 extension FZFileDownloadManager{
-    /// 文件的 保存 缓存目录 （自定义
-    func getFileAppSaveURL(with url: String) -> URL{
+    /// 文件的 保存 目录 （自定义
+    private func getDestinationURL(with url: String) -> URL{
         let path = ""//fileDownloadInfosDict[url]?.appFileRelativePath ?? ""
-        let fileURL = downloadDirectory.appendingPathComponent((path as NSString).lastPathComponent)
+        let fileURL = downloadDirectory.appendingPathComponent(path)
         return fileURL
     }
+    /// 文件的 保存 缓存目录 （自定义
     private func getResuemDataCacheURL(with url: String) -> URL{
         let path = ""//fileDownloadInfosDict[url]?.appResumeDataPath ?? ""
-        let fileURL = cacheDirectory.appendingPathComponent((path as NSString).lastPathComponent)
+        let fileURL = cacheDirectory.appendingPathComponent(path)
         return fileURL
     }
     
@@ -330,9 +335,6 @@ extension FZFileDownloadManager{
     func getAllDownloadingCount() -> Int {
         return fileDownloadInfosDict.count
     }
-    
-    func getAllDownloadList()  {
-          
-    }
+     
      
 }
