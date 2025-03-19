@@ -1,10 +1,10 @@
 //
 //  FZFileDownloadManager.swift
-//  LubasApp
+//  ElmApp
 //
-//  Created by lpd on 2025/1/10.
+//  Created by lpd on 2025/1/6.
+//  Copyright © 2025 Enabot Technology (Shenzhen) Company Limited. All rights reserved.
 //
-
 
 import Foundation
 import Alamofire
@@ -27,11 +27,10 @@ class FZFileDownloadManager{
     }
     
     // 处理 业务相关
-    var fileDownloadInfosDict: [String : String] = [:]   //下载链接 作为key
-    
+    var fileDownloadInfosDict: [String : FZFileDownloadInfo] = [:]   //下载链接 作为key
     private var lock: NSRecursiveLock? = NSRecursiveLock()
 
-    // 本身
+    // 本身 
     static let shared = FZFileDownloadManager.init()
      
     private let maxConcurrentDownloads: Int = 1  // 最大同时下载数
@@ -60,19 +59,14 @@ class FZFileDownloadManager{
         operationQueue.maxConcurrentOperationCount = maxConcurrentDownloads
 
         let fileManager = FileManager.default
-        
-        // 创建文件保存目录
+         
         let path1 = "FZFileDownloads"
         downloadDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(path1)
         if !fileManager.fileExists(atPath: downloadDirectory.path) {
             try? fileManager.createDirectory(at: downloadDirectory, withIntermediateDirectories: true, attributes: nil)
         }
-        
-        let path2 = "FZFileCaches"
-        cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent(path2)
-        if !fileManager.fileExists(atPath: cacheDirectory.path) {
-            try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
-        }
+
+        cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
     }
      
 }
@@ -93,43 +87,47 @@ extension FZFileDownloadManager{
             return progress
         }
         return nil
-    }
+    } 
     
 }
 
 extension FZFileDownloadManager{
     private func removeResumeData(url: String){
          
-        let resumeDataURL = getResuemDataCacheURL(with: url)
+        guard let resumeDataURL = getResuemDataCacheURL(with: url) else { return }
          
         do {
             try FileManager.default.removeItem(at: resumeDataURL)
         } catch {
-            debugPrint("📲 Download removeItem error \(error.localizedDescription)")
+            print("pdd Download removeItem error \(error.localizedDescription)")
         }
     }
     
     private func cacheResumeData(_ resumeData: Data, url: String){
          
-        let resumeDataURL = getResuemDataCacheURL(with: url)
-        
+        guard let resumeDataURL = getResuemDataCacheURL(with: url) else { return }
+        print("pdd 开始 保存断点 ")
         do {
             try resumeData.write(to: resumeDataURL)
-            debugPrint("📲 Download resumingData 断点保存 \(resumeData.count)")
+            print("pdd 断点保存了 \(resumeData.count)")
         } catch {
-            debugPrint("📲 Download resumeData error \(error.localizedDescription)")
+            print("pdd 断点保存 error \(error.localizedDescription)")
         }
     }
     
     private func getResumeData(url: String) -> Data?{
-        let resumeDataURL = getResuemDataCacheURL(with: url)
-        
+        print("pdd 获取断点数据 ")
+        guard let resumeDataURL = getResuemDataCacheURL(with: url) else {
+            print("pdd 没有resumeDataURL")
+            return nil
+        }
         let resumingData: Data? = try? Data(contentsOf: resumeDataURL)
          
         if let data = resumingData {
+            print("pdd 获取断点数据 成功")
             return data
         }
-        
+        print("pdd 获取断点数据 nil")
         return nil
     }
     
@@ -166,7 +164,7 @@ extension FZFileDownloadManager{
             completion(.success(fileURL))
             return
         }
-        
+         
         // 是否 正在下载
         if downloadingTasks.keys.contains(url) {
 //            progress(0.0) // 初始进度    todo?
@@ -195,6 +193,15 @@ extension FZFileDownloadManager{
     func startDownload(from url: String, progress: @escaping (Progress) -> Void, completion: @escaping (Result<URL?, Error>) -> Void
     ) {
         
+        if let resumeDataURL = getResuemDataCacheURL(with: url) {
+            do {
+                print("pdd 创建Cache目录 ")
+                try FileManager.default.createDirectory(at: resumeDataURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            } catch {
+                print("pdd 创建Cache目录 失败 \(error.localizedDescription)")
+            }
+        }
+        
         // 下载到
         let fileURL = getDestinationURL(with: url)
         let destination: DownloadRequest.Destination = { _, _ in
@@ -220,9 +227,13 @@ extension FZFileDownloadManager{
             self?.operationQueue.addOperation {
                 
                 downloadTask.downloadProgress { progressData in
-                    self?.updateDownloadStatus(for: url, progress: progressData)
-                    progress(progressData)
+                    if progressData.fractionCompleted < 1{
+                        self?.updateDownloadStatus(for: url, progress: progressData)
+                        progress(progressData)
+                    }
+                    
                 }.response { response in
+//                    debugPrint("pdd handleDownload 完成Response")
                     self?.handleDownloadResponse(url: url, response: response, completion: completion)
                 }
             }
@@ -234,13 +245,14 @@ extension FZFileDownloadManager{
     private func handleDownloadResponse(url: String, response: AFDownloadResponse<URL?>, completion: (Result<URL?, Error>) -> Void) {
         switch response.result {
         case .success(let fileURL):
-                
+            print("pdd --下载 success")
             downloadStatus[url] = .completed(url)
             completion(.success(fileURL))
                 
         case .failure(let error):
             if let resumeData = response.resumeData {
                 // 缓存， 以支持断点续传
+                print("pdd --下载failure")
                 cacheResumeData(resumeData, url: url)
                 // 保存下载状态
                 downloadStatus[url] = .paused(progress: getProgress(for: url) ?? 0.0)
@@ -259,25 +271,32 @@ extension FZFileDownloadManager{
         // 启动下一个任务
         if let nextTask = pendingDownloads.popFirst()?.value {
             startDownload(from: nextTask.url, progress: nextTask.progress, completion: nextTask.completion)
+        }else{
+//            debugPrint("pdd 没有了")
         }
     }
     
     /// 取消单个任务
     func cancelDownload(for url: String) {
-        downloadingTasks[url]?.cancel()
-        saveTask(nil, for: url)
-        removeResumeData(url: url)
-        downloadStatus[url] = nil
-        pendingDownloads[url] = nil
+//        downloadingTasks[url]?.cancel()
         
-        self.lock?.lock()
-        fileDownloadInfosDict[url] = nil
-        self.lock?.unlock()
-    }
-    
-    /// 批量取消任务
-    func cancelAllDownloads() {
-        downloadingTasks.keys.forEach { cancelDownload(for: $0) }
+        guard let task = downloadingTasks[url] else { return }
+        task.cancel {[weak self] resumeData in
+            print("pdd --下载 取消")
+            if let resumeData = resumeData {
+                self?.cacheResumeData(resumeData, url: url)  // 保存断点数据
+            }
+            
+            self?.saveTask(nil, for: url)
+    //        self?.removeResumeData(url: url)   // 清除断点数据 ?
+            self?.downloadStatus[url] = nil
+            self?.pendingDownloads[url] = nil
+            
+            self?.lock?.lock()
+            self?.fileDownloadInfosDict[url] = nil
+            self?.lock?.unlock()
+        }
+         
     }
     
     /// 暂停下载任务
@@ -296,13 +315,24 @@ extension FZFileDownloadManager{
         }
     }
     
+    /// 批量取消任务
+    func cancelAllDownloads() {
+        downloadingTasks.keys.forEach { cancelDownload(for: $0) }
+        pendingDownloads.keys.forEach { cancelDownload(for: $0) }
+    }
+    
+    /// 批量暂停任务
+    func pauseAllDownloads() {
+        downloadingTasks.keys.forEach { pauseDownload(for: $0) }
+    }
+     
     /// 更新下载状态
     private func updateDownloadStatus(for url: String, progress: Progress) {
         downloadStatus[url] = .downloading(progress: progress.fractionCompleted)
         
-//        self.lock?.lock()
-//        FZFileDownloadManager.shared.fileDownloadInfosDict[url]?.progress = progress
-//        self.lock?.unlock()
+        self.lock?.lock()
+        FZFileDownloadManager.shared.fileDownloadInfosDict[url]?.progress = progress
+        self.lock?.unlock()
     }
     /// 保存下载任务
     private func saveTask(_ task: DownloadRequest?, for url: String) {
@@ -320,21 +350,47 @@ extension FZFileDownloadManager{
 extension FZFileDownloadManager{
     /// 文件的 保存 目录 （自定义
     private func getDestinationURL(with url: String) -> URL{
-        let path = ""//fileDownloadInfosDict[url]?.appFileRelativePath ?? ""
+        let path = fileDownloadInfosDict[url]?.appFileRelativePath ?? ""
+
         let fileURL = downloadDirectory.appendingPathComponent(path)
         return fileURL
     }
     /// 文件的 保存 缓存目录 （自定义
-    private func getResuemDataCacheURL(with url: String) -> URL{
-        let path = ""//fileDownloadInfosDict[url]?.appResumeDataPath ?? ""
-        let fileURL = cacheDirectory.appendingPathComponent(path)
-        return fileURL
+    private func getResuemDataCacheURL(with url: String) -> URL?{
+        if let path = fileDownloadInfosDict[url]?.appResumeDataPath {
+            let fileURL = cacheDirectory.appendingPathComponent(path)
+            print("pddz CacheURL是\(fileURL)")
+            return fileURL
+        }
+        return nil
     }
     
     /// 获取 所有下载 任务数
     func getAllDownloadingCount() -> Int {
-        return fileDownloadInfosDict.count
+        self.lock?.lock()
+        let c = fileDownloadInfosDict.count
+        self.lock?.unlock()
+        return c
     }
-     
-     
+    
+    func getAllDownloadList() -> [FZFileDownloadInfo] {
+        
+        if let list = fileDownloadInfosDict.map({ $0.value }) as? [FZFileDownloadInfo]{
+//        if let list = Array(fileDownloadInfosDict.values) as? [FZFileDownloadInfo]{
+            return list
+        }
+        return []
+    }
+    
+    /// 保存 加入下载列表的 fdModel
+    func addFileToDownload(fdModel: FZRobotFileDBModel){
+        
+//        guard let url = fdModel.mediaFileURLPath else { return }
+//        let url = ""
+//        let item = FZFileDownloadInfo.init(fileModel: fdModel, url: url)
+//
+//        self.lock?.lock()
+//        FZFileDownloadManager.shared.fileDownloadInfosDict[url] = item   // 记录
+//        self.lock?.unlock()
+    }
 }
