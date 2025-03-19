@@ -10,6 +10,21 @@
 import UIKit
 import SnapKit
 
+extension UISlider {
+    /// [0, 1]之间的相对值
+    func getRelativeValue() -> Float {
+        let value: Float = self.value
+        let diff: Float = value - self.minimumValue
+        let range: Float = self.maximumValue - self.minimumValue
+        return range > 0 ? diff / range : 0
+    }
+}
+ 
+class PointableSlider: UISlider {
+    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        return true
+    }
+}
 
 protocol FZMediaControlDelegate: AnyObject {
     
@@ -33,7 +48,7 @@ class FZPlayerControlView: UIView {
     weak var controlDelegate: FZMediaControlDelegate?
 
     static let defaultSliderHeight: CGFloat = 48
-    static let defaultBtnHeight: CGFloat = 44
+    static let defaultBtnHeight: CGFloat = 30
     static let defaultPortraitHeight: CGFloat = defaultSliderHeight + defaultBtnHeight
     static let defaultLandscapeHeight: CGFloat = defaultSliderHeight
     
@@ -51,7 +66,13 @@ class FZPlayerControlView: UIView {
     private var lastShowThreeParts: Bool = false // fale表示 "00:00", true表示 "00:00:00"
     
     private var speedRate: Float = 1.0
-    private var speedRates: [Float] = [1.0, 2.0, 4.0, 8.0]
+    private var speedRates: [Float] = [1.0, 2.0, 4.0]
+    private var speedRateIndex = 0
+    
+    var speedRateIsHidden = false
+    
+    var rateListBottomConstraint: Constraint?
+    var rateListTrailingConstraint: Constraint?
 
     private lazy var currentTimeLabel: UILabel = {
         let view = UILabel(frame: .zero)
@@ -89,10 +110,10 @@ class FZPlayerControlView: UIView {
         slider.maximumValue = 100
         slider.value = 0
         // 小于滑块当前值滑块条的颜色
-        slider.minimumTrackTintColor = UIColor.cyan
+        slider.minimumTrackTintColor = .orange   //UIColor(rgbValue: 0x00A5FF)
         // 大于滑块当前值滑块条的颜色
         slider.maximumTrackTintColor = .white.withAlphaComponent(0.4)
-        
+//        slider.setThumbImage(.fz.imgName(light: "", dark: "playerSliderThumbIcon"), for: .normal)  
         slider.addTarget(self, action: #selector(self.onSliderChange(slider:event:)), for: .valueChanged)
         return slider
     }()
@@ -145,8 +166,8 @@ class FZPlayerControlView: UIView {
         view.addTarget(self, action: #selector(self.onClickRateBtn(_:)), for: .touchUpInside)
         view.setTitle("1x", for: .normal)
         view.setTitleColor(.white, for: .normal)
-        view.titleLabel?.font = .boldSystemFont(ofSize: 15)
-        view.titleLabel?.shadowColor = UIColor(hex: 0x666666).withAlphaComponent(0.3)
+//        view.titleLabel?.font = 13.fontEBO(.bold)
+        view.titleLabel?.shadowColor = UIColor.gray.withAlphaComponent(0.3)
         view.titleLabel?.shadowOffset = CGSize(width: 1, height: 1)
         view.layer.cornerRadius = 4
         view.layer.masksToBounds = true
@@ -155,11 +176,13 @@ class FZPlayerControlView: UIView {
         return view
     }()
     
+    var rateListView: FZPopupMenuListView?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
         commonInit()
+         
     }
     
     required init?(coder: NSCoder) {
@@ -171,7 +194,7 @@ class FZPlayerControlView: UIView {
     
     @objc func onClickControlBtn(_ btn: UIButton) {
         btn.isSelected = !btn.isSelected
-
+        removeRateList()
         /// btn.isSelected 与isPlaying一致
         if btn.isSelected {
             controlDelegate?.mediaControlOnClickPlay()
@@ -180,33 +203,24 @@ class FZPlayerControlView: UIView {
             controlDelegate?.mediaControlOnClickPause()
         }
     }
+      
     
     @objc func onClickRateBtn(_ btn: UIButton) {
-        if var index: Int = speedRates.firstIndex(of: speedRate) {
-            if index + 1 < speedRates.count {
-                index += 1
-            } else {
-                index = 0
-            }
-            if index < speedRates.count {
-                setSpeedRate(rate: speedRates[index])
-            } else {
-                setSpeedRate(rate: 1.0)
-            }
-        } else {
-            setSpeedRate(rate: 1.0)
-        }
-        controlDelegate?.mediaControlOnClickRate(rate: speedRate)
+        addRateList(by: btn)
     }
     
     
     @objc func onClickFullScreenBtn(_ btn: UIButton) {
      
+        removeRateList()
+        
         viewDelegate?.mediaControlOnClickFullScreen()
     }
     
     @objc func onClickExitFullScreenBtn(_ btn: UIButton) {
- 
+        
+        removeRateList()
+        
         viewDelegate?.mediaControlOnClickExitFullScreen()
     }
     
@@ -214,11 +228,13 @@ class FZPlayerControlView: UIView {
         guard let touch = event.allTouches?.first else { return }
         switch touch.phase {
         case .began:
+            removeRateList()
+                
             isSliding = true
             updateUIWasCalledWhenSliding = false // 清空flag
             controlDelegate?.mediaControlOnSliderBegan()
         case .moved, .stationary:
-            let relative: Float = slider.getRelativeValue()
+            let relative: Float = slider.getRelativeValue() 
             controlDelegate?.mediaControlOnSliderChangedWith(relativeValue: relative)
         case .cancelled:
             isSliding = false
@@ -244,6 +260,7 @@ extension FZPlayerControlView {
     
     static func getVideoDurationStr(seconds: Double, forceThreeParts: Bool) -> String {
         guard seconds >= 0 else {
+//            elog.warning("illegal value")
             if forceThreeParts {
                 return "00:00:00"
             }
@@ -270,6 +287,55 @@ extension FZPlayerControlView {
 }
 
 extension FZPlayerControlView {
+    
+    public func removeRateList(){
+        if let v = rateListView{
+            
+            v.removeFromSuperview()
+            rateListView = nil
+        } 
+    }
+    
+    /// 显示 倍速列表浮窗；btn 为点击触发者
+    public func addRateList(by btn: UIButton){
+        
+        if let _ = rateListView {
+            removeRateList()   // 如果已显示，则隐藏
+            return
+        }
+        
+        guard let theView = self.superview else { return }
+        
+        let rs = speedRates.map{ Int($0).description + "x" }
+        let v = FZPopupMenuListView(frame: CGRectMake(0, 0, 1, 1), dataSource: rs)
+        v.selectedRowAction = { [weak self] row in
+            guard let weakSelf = self else { return }
+            
+            weakSelf.speedRateIndex = row
+            weakSelf.speedRate = weakSelf.speedRates[row]
+            weakSelf.setSpeedRate(rate: weakSelf.speedRate)
+            weakSelf.controlDelegate?.mediaControlOnClickRate(rate: weakSelf.speedRate)
+        }
+        v.setSelectedIndex(idx: speedRateIndex)
+        
+        theView.addSubview(v)
+        
+        let xf = CGRectGetMinX(btn.frame) - 8
+        
+        v.snp.makeConstraints { make in
+            make.width.equalTo(50)
+            let h = 30 * Double(rs.count)
+            make.height.equalTo(h)
+            make.bottom.equalTo(btn.snp.top).offset(-8)
+            make.leading.equalToSuperview().offset(xf)
+        }
+        
+        rateListView = v
+    }
+    
+}
+
+extension FZPlayerControlView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         return super.hitTest(point, with: event)
     }
@@ -282,27 +348,55 @@ extension FZPlayerControlView {
 
 extension FZPlayerControlView {
     
+    func hideSpeedBtn(){
+        
+    }
+    
+    func setControlBtnImageForSE2(){
+        controlBtn.setImage(.init(named: "LookBackVideoPlayIcon"), for: .normal)
+        controlBtn.setImage(.init(named: "LookBackVideoPlayIcon"), for: .highlighted)
+        controlBtn.setImage(.init(named: "LookBackVideoPauseIcon"), for: .selected)
+        controlBtn.setImage(UIImage(named: "LookBackVideoPauseIcon"), for: [.selected, .highlighted])
+    }
+    
+    func relayoutSliderBoxForStyle2(){
+        // 跟 播放按钮 处于 同一行
+//        print("pdd relayout SliderBoxForStyle2")
+        timeSliderBox.snp.remakeConstraints { make in
+            make.top.bottom.equalToSuperview()
+            make.leading.equalTo(controlBtn.snp.trailing)
+            make.trailing.equalTo(rateBtn.snp.leading)
+        }
+    }
+    
     func updateUI(isPlaying: Bool) {
         /// 注意：controlBtn.isSelected 与isPlaying一致
-        if isPlaying {
-            self.controlBtn.isSelected = true
-        } else {
-            self.controlBtn.isSelected = false
-        }
+        self.controlBtn.isSelected = isPlaying 
     }
     
     func setSpeedRate(rate: Float) {
         if speedRates.contains(rate) {
             speedRate = rate
+
+            speedRateIndex = speedRates.firstIndex { r in
+                r == rate
+            } ?? 0
         } else {
             speedRate = 1.0
+            speedRateIndex = 0
         }
         let rateInt: Int = Int(rate)
         rateBtn.setTitle(String(format: "%d", rateInt) + "x", for: .normal)
+         
     }
     
     func getSpeedRate() -> Float {
         return speedRate
+    }
+    
+    /// 检查当前UI 是否是 播放态
+    func isPlayingState() -> Bool{
+        return controlBtn.isSelected
     }
     
     private func updateConstraintsForTimeLabel(showThreeParts: Bool) {
@@ -341,8 +435,8 @@ extension FZPlayerControlView {
         currentTimeLabel.text = currentStr
 
         updateUI(isPlaying: isPlaying)
-
-        guard !skipSlider else {  return }
+ 
+        if skipSlider { return }
         
         guard !self.isSliding else {
             /// 用户滑动中，有外部其他方法调用了updateUI，不能调用setValue。
@@ -388,9 +482,9 @@ extension FZPlayerControlView {
     
     private func commonInit() {
         addSubview(timeSliderBox)
-        timeSliderBox.addSubview(currentTimeLabel)
-        timeSliderBox.addSubview(durationTimeLabel)
-        timeSliderBox.addSubview(slider)
+//        timeSliderBox.addSubview(currentTimeLabel)
+//        timeSliderBox.addSubview(durationTimeLabel)
+//        timeSliderBox.addSubview(slider)
         
         addSubview(controlBtn)
         addSubview(fullScreenBtn)
@@ -415,8 +509,14 @@ extension FZPlayerControlView {
         
         rateBtn.snp.remakeConstraints { make in
             make.centerY.equalTo(exitFullScreenBtn)
-            make.trailing.equalTo(exitFullScreenBtn.snp.leading).offset(-12)
-            make.size.equalTo(CGSize(width: FZPlayerControlView.defaultBtnHeight - 2, height: FZPlayerControlView.defaultBtnHeight/2))
+            make.height.equalTo(FZPlayerControlView.defaultBtnHeight * 0.6)
+            make.width.equalTo(FZPlayerControlView.defaultBtnHeight * 0.8)
+             
+            if speedRateIsHidden {
+                make.trailing.equalTo(exitFullScreenBtn)
+            }else{
+                make.trailing.equalTo(exitFullScreenBtn.snp.leading).offset(-12)
+            }
         }
         
         timeSliderBox.snp.remakeConstraints { make in
@@ -424,6 +524,8 @@ extension FZPlayerControlView {
             make.leading.equalTo(controlBtn.snp.trailing)
             make.trailing.equalTo(rateBtn.snp.leading).offset(-12)
         }
+        
+        rateBtn.isHidden = speedRateIsHidden
         
         exitFullScreenBtn.isHidden = false
         fullScreenBtn.isHidden = true
@@ -443,7 +545,7 @@ extension FZPlayerControlView {
         rateBtn.snp.remakeConstraints { make in
             make.centerY.equalTo(fullScreenBtn)
             make.trailing.equalTo(fullScreenBtn.snp.leading).offset(-12)
-            make.size.equalTo(CGSize(width: FZPlayerControlView.defaultBtnHeight - 2, height: FZPlayerControlView.defaultBtnHeight/2))
+            make.size.equalTo(CGSize(width: FZPlayerControlView.defaultBtnHeight * 0.8, height: FZPlayerControlView.defaultBtnHeight * 0.6))
         }
         
         timeSliderBox.snp.remakeConstraints { make in
@@ -451,6 +553,7 @@ extension FZPlayerControlView {
             make.bottom.equalTo(controlBtn.snp.top)
         }
          
+        rateBtn.isHidden = speedRateIsHidden
         
         exitFullScreenBtn.isHidden = true
         fullScreenBtn.isHidden = false
@@ -474,18 +577,6 @@ extension Double {
 }
 
 
-extension UISlider {
-    /// [0, 1]之间的相对值
-    func getRelativeValue() -> Float {
-        let value: Float = self.value
-        let diff: Float = value - self.minimumValue
-        let range: Float = self.maximumValue - self.minimumValue
-        return range > 0 ? diff / range : 0
-    }
-}
+
+
  
-class PointableSlider: UISlider {
-    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        return true
-    }
-}
