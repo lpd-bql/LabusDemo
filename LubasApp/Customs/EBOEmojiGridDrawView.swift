@@ -8,6 +8,7 @@
 
 import UIKit
 
+
 protocol EBOEmojiGridDrawViewDelegate: AnyObject{
     func removeEmojiDraw()
 }
@@ -90,12 +91,12 @@ class EBOEmojiGridDrawView: UIView{
         v.alignment = .center
         
         let icons = [
-            "上", "下", "左", "右", "旋", "删",
+            "iconArrowUp", "iconArrowDown", "iconArrowLeft", "iconArrowRight", "iconArrowC", "iconDeleteWhite",
         ]
         
         for (idx, str) in icons.enumerated(){
             let b = UIButton()
-            b.setTitle(str, for: .normal)
+            b.setImage(.init(named: str), for: .normal)
             b.tag = 10 + idx
             b.addTarget(self, action: #selector(btnAction(_:)), for: .touchUpInside)
             v.addArrangedSubview(b)
@@ -283,7 +284,7 @@ extension EBOEmojiGridDrawView{
         cleanSomeValue()
         
         emojiValueHexStrTemp = selectedStateHexString
-//        print("pdddddo: ", emojiValueHexStrTemp)
+//        debugPrint("pdddddo: ", emojiValueHexStrTemp)
         
         if let cell = collectionView.cellForItem(at: indexPath) {
             checkSeletedUI(for: cell, at: indexPath)
@@ -294,12 +295,12 @@ extension EBOEmojiGridDrawView{
     private func checkSeletedUI(for cell: UICollectionViewCell, at indexPath: IndexPath) {
         let row = indexPath.item / 7  // 计算行（0-6）
         let col = indexPath.item % 7  // 计算列（0-6）
-//        print("pddddd row: ", row)
-//        print("pddddd col: ", col)
+//        debugPrint("pddddd row: ", row)
+//        debugPrint("pddddd col: ", col)
 
         let isSelected = isSelected(row: row, col: col)
         
-        cell.contentView.backgroundColor = isSelected ? UIColor.white : UIColor.black
+        cell.contentView.backgroundColor = isSelected ? UIColor.yellow : UIColor.gray
     }
     
     // 判断 cell是否选中
@@ -357,6 +358,8 @@ extension EBOEmojiGridDrawView{
     // 复位
     func reset(){
         selectedStateArr = Array(repeating: 0x00, count: 7)  // 0表示 未选中，1表示选中
+        emojiValueHexStrTemp = selectedStateHexString
+//        print("pdd emojiValueHexStrTemp: ", emojiValueHexStrTemp)
         collectionView.reloadData()
     }
 }

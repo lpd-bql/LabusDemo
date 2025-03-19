@@ -59,7 +59,9 @@
 		E6AB0A7D2CE33E260066F411 /* MyTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6AB0A7C2CE33E240066F411 /* MyTableViewController.swift */; };
 		E6AB0A7F2CE33EC40066F411 /* ListRefreshable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6AB0A7E2CE33EC20066F411 /* ListRefreshable.swift */; };
 		E6AB0A812CE351160066F411 /* NetworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6AB0A802CE351140066F411 /* NetworkCache.swift */; };
-		E6AD4D0C2D5C8C05007498D8 /* EBOEmojiGridDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6AD4D0B2D5C8C05007498D8 /* EBOEmojiGridDrawView.swift */; };
+		E6B4819F2D782208008E0499 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B4819E2D782207008E0499 /* ImageLoader.swift */; };
+		E6B84D772D8AC7B8003126E1 /* EBOEmojiGridDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B84D752D8AC7B8003126E1 /* EBOEmojiGridDrawView.swift */; };
+		E6B84D782D8AC7B8003126E1 /* FZEmojiGridDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B84D762D8AC7B8003126E1 /* FZEmojiGridDrawView.swift */; };
 		E6D09C062CE4473D00BA4845 /* DataExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D09C052CE4473200BA4845 /* DataExtension.swift */; };
 		E6D09C082CE47B5D00BA4845 /* Ball.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D09C072CE47B5B00BA4845 /* Ball.swift */; };
 		E6D36D9A2CE203C7004045A5 /* AppGloble.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D36D992CE203AB004045A5 /* AppGloble.swift */; };
@@ -125,7 +127,9 @@
 		E6AB0A7C2CE33E240066F411 /* MyTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTableViewController.swift; sourceTree = "<group>"; };
 		E6AB0A7E2CE33EC20066F411 /* ListRefreshable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListRefreshable.swift; sourceTree = "<group>"; };
 		E6AB0A802CE351140066F411 /* NetworkCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkCache.swift; sourceTree = "<group>"; };
-		E6AD4D0B2D5C8C05007498D8 /* EBOEmojiGridDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EBOEmojiGridDrawView.swift; sourceTree = "<group>"; };
+		E6B4819E2D782207008E0499 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
+		E6B84D752D8AC7B8003126E1 /* EBOEmojiGridDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EBOEmojiGridDrawView.swift; sourceTree = "<group>"; };
+		E6B84D762D8AC7B8003126E1 /* FZEmojiGridDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FZEmojiGridDrawView.swift; sourceTree = "<group>"; };
 		E6D09C052CE4473200BA4845 /* DataExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExtension.swift; sourceTree = "<group>"; };
 		E6D09C072CE47B5B00BA4845 /* Ball.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ball.swift; sourceTree = "<group>"; };
 		E6D36D992CE203AB004045A5 /* AppGloble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGloble.swift; sourceTree = "<group>"; };
@@ -203,7 +207,8 @@
 			children = (
 				E6AB00242D423CA70032A4B1 /* AV */,
 				E6AB00202D423AD30032A4B1 /* SheetView.swift */,
-				E6AD4D0B2D5C8C05007498D8 /* EBOEmojiGridDrawView.swift */,
+				E6B84D752D8AC7B8003126E1 /* EBOEmojiGridDrawView.swift */,
+				E6B84D762D8AC7B8003126E1 /* FZEmojiGridDrawView.swift */,
 				E6AB0A792CE32F990066F411 /* PDLabel.swift */,
 				6FA3946C2CBF616200B290D8 /* AlertView.swift */,
 				6FA3945E2CBE7B4700B290D8 /* PopupView.swift */,
@@ -258,6 +263,7 @@
 		6FE7C4072CBE4B390046E7FD /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				E6B4819E2D782207008E0499 /* ImageLoader.swift */,
 				E6D36D992CE203AB004045A5 /* AppGloble.swift */,
 				6FA394822CCC999300B290D8 /* DataUtils.swift */,
 				6FE7C40C2CBE4DE90046E7FD /* Utilities.swift */,
@@ -536,6 +542,7 @@
 			files = (
 				6FA3945C2CBE79DA00B290D8 /* ImageExtension.swift in Sources */,
 				6FA394632CBE864500B290D8 /* Const-UI.swift in Sources */,
+				E6B4819F2D782208008E0499 /* ImageLoader.swift in Sources */,
 				6FE7C4192CBE513B0046E7FD /* AppCoordinator.swift in Sources */,
 				6FA3946B2CBEB9D600B290D8 /* UIAdaptation.swift in Sources */,
 				6FA394652CBEB05D00B290D8 /* ViewExtension-Frame.swift in Sources */,
@@ -562,6 +569,8 @@
 				E6A64BEA2D3132530000CF82 /* FZFileDownloadManager.swift in Sources */,
 				E6AB002A2D423CC20032A4B1 /* FZVideoPlayerLandscapeVC.swift in Sources */,
 				E6AB002B2D423CC20032A4B1 /* FZPlayerControlView.swift in Sources */,
+				E6B84D772D8AC7B8003126E1 /* EBOEmojiGridDrawView.swift in Sources */,
+				E6B84D782D8AC7B8003126E1 /* FZEmojiGridDrawView.swift in Sources */,
 				E6AB002C2D423CC20032A4B1 /* FZAVPlayerProcessor.swift in Sources */,
 				E6AB002D2D423CC20032A4B1 /* FZVideoPlayerVC.swift in Sources */,
 				E6AB002E2D423CC20032A4B1 /* FZAVPlayLayerView.swift in Sources */,
@@ -572,7 +581,6 @@
 				E6AB00232D423BCA0032A4B1 /* UIStackView-ext.swift in Sources */,
 				6FA3947B2CC3D3ED00B290D8 /* DetailViewController.swift in Sources */,
 				6FA394812CC7E4E200B290D8 /* APIService.swift in Sources */,
-				E6AD4D0C2D5C8C05007498D8 /* EBOEmojiGridDrawView.swift in Sources */,
 				6FA394692CBEB47500B290D8 /* LabelExtension.swift in Sources */,
 				6FE7C4252CBE62BC0046E7FD /* ThemeStyle.swift in Sources */,
 				E6AB0A762CE328150066F411 /* NetworkStatus.swift in Sources */,

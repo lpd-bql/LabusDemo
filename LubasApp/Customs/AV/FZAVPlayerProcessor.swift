@@ -108,7 +108,7 @@ extension FZAVPlayerProcessor {
     }
     
     func play() {
-        player?.play()
+        player?.play()   // 播放速度= 1.0
     }
     
     func pause() {
@@ -138,7 +138,7 @@ extension FZAVPlayerProcessor {
     func replaceItem(_ item: AVPlayerItem?) {
         playerItem = item
         // 希望缓存多少秒的视频数据，减小这个值可 降低播放的启动延迟
-        playerItem?.preferredForwardBufferDuration = 1.5
+        playerItem?.preferredForwardBufferDuration = 12
 
         player?.pause()
         player?.seek(to: .zero)
